@@ -58,6 +58,28 @@ class Apu(PcPart):
   renderOutputUnitCount = ""
   gpuBaseFrequency = ""
 
+def statsPage(url):
+  print("scraping "+ url+"...")
+  sleep(1)
+  try:
+    webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
+  except HTTPError as e:#If there is a server error
+    print("e")#show the error
+  except URLError as e:#If URL does not exist
+    print("Server could not be found")
+  else:#If there are no errors
+    html = BS(webpage.read(), "html.parser")
+    latestResult = html.find('table',{'class':'infobox'})
+    latestResult1 = html.find('div',{'class':'smwfact'}).find('table',{'class':'smwfacttable'})
+    stats = []
+    statsHtml = latestResult1.findAll('tr')
+    for each in statsHtml:
+      if(each.find('td',{'class':'smwpropname'})):
+        stats.append({each.find('td',{'class':'smwpropname'}).getText().replace(u'\xa0', ' '):each.find('td',{'class':'smwprops'}).getText().replace(u'\xa0', ' ')[:-3]})
+
+    print(stats)
+
+
 def codenamePage(title, url):
   print("scraping "+ url+"...")
   sleep(1)
@@ -95,6 +117,11 @@ def codenamePage(title, url):
           #if "," in temp:
           #  temp = temp.split(",")[0]
           minValues.append({titles[count]:temp})
+
+          nextUrl = j.find('a', href=True)
+          if nextUrl:
+            statsPage(BASE_URL + nextUrl['href'])
+
           count = count +1
         values.append(minValues)
       for each in values:
