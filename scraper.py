@@ -8,7 +8,18 @@ URL = "https://en.wikichip.org/wiki/amd/microarchitectures/zen_2"#Would be the u
 req = Request(URL, headers={'User-Agent':'Mozilla/6.0'})
 
 
+class Architerture():
+  name = ""
+  humanName = ""
+  type = ""
+  lithography = ""
+  releaseDay = ""
+  socket = ""
+  parts = []
+
+
 class PcPart():
+  header = ""
   name = ""
   humanName=""
   type = ""
@@ -22,12 +33,30 @@ class PcPart():
   tdp = ""
   l1DataCache = ""
   l1InstructionCache = ""
+  unlocked = ""
+  memoryType = ""
+  maxMemoryFrequency = ""
+  xfr = ""
+  avxSseMmx = ""
+  fma4 = ""
+  fma3 = ""
+  bmi = ""
+  aes = ""
+  sha = ""
+  otherExtensions = []
+  compatibleChipsets = []
+  steppings = []
 
   #def __innit__(self, ):
   #
 
 class Apu(PcPart):
   gpuModel = ""
+  maxDisplays = ""
+  shaderProcessorCount = ""
+  textureMappingUnitCount = ""
+  renderOutputUnitCount = ""
+  gpuBaseFrequency = ""
 
 def codenamePage(title, url):
   print("scraping "+ url+"...")
