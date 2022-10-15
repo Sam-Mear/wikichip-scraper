@@ -4,7 +4,7 @@ from urllib.error import HTTPError,URLError
 from bs4 import BeautifulSoup as BS
 
 BASE_URL = "https://en.wikichip.org"
-URL = "https://en.wikichip.org/wiki/amd/microarchitectures/zen_2"#Would be the user input
+URL = "https://en.wikichip.org/wiki/amd/microarchitectures/zen_3"#Would be the user input
 req = Request(URL, headers={'User-Agent':'Mozilla/6.0'})
 
 
@@ -91,7 +91,10 @@ def codenamePage(title, url):
     print("Server could not be found")
   else:#If there are no errors
     html = BS(webpage.read(), "html.parser")
-    latestResult = html.findAll('table')[1]
+    #find list of cpus table
+    latestResult = html.find('span',{'id':title+'_Processors'}).parent
+    latestResult = (latestResult.find_next_sibling('div').find('table'))
+    #latestResult = html.findAll('table')[1]
     #print(latestResult)
     #below doesnt work because wikichip tables are inconsistant af
     #if("List of "+title+" Processors") in latestResult.getText():
