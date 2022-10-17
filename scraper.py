@@ -1,3 +1,5 @@
+import yaml
+from os import mkdir
 from time import sleep as sleep
 from urllib.request import Request,urlopen
 from urllib.error import HTTPError,URLError
@@ -58,7 +60,7 @@ class Apu(PcPart):
   renderOutputUnitCount = ""
   gpuBaseFrequency = ""
 
-def statsPage(url):
+def statsPage(url, title):
   print("scraping "+ url+"...")
   sleep(1)
   try:
@@ -71,17 +73,24 @@ def statsPage(url):
     html = BS(webpage.read(), "html.parser")
     latestResult = html.find('table',{'class':'infobox'})
     latestResult1 = html.find('div',{'class':'smwfact'}).find('table',{'class':'smwfacttable'})
-    stats = []
+    stats2 = {}
     statsHtml = latestResult1.findAll('tr')
     for each in statsHtml:
       if(each.find('td',{'class':'smwpropname'})):
-        stats.append({each.find('td',{'class':'smwpropname'}).getText().replace(u'\xa0', ' '):each.find('td',{'class':'smwprops'}).getText().replace(u'\xa0', ' ')[:-3]})
-
-    print(stats)
+        stats2[each.find('td',{'class':'smwpropname'}).getText().replace(u'\xa0', ' ')] = each.find('td',{'class':'smwprops'}).getText().replace(u'\xa0', ' ')[:-3]
+    
+    with open((title.replace(" ","-"))+'/'+ stats2['model number']+'.yaml', 'w') as outfile:
+      yaml.dump(stats2, outfile, default_flow_style=False)
 
 
 def codenamePage(title, url):
   print("scraping "+ url+"...")
+  try:
+    # Create target Directory
+    mkdir(title.replace(" ","-"))
+    print("Directory Created ") 
+  except FileExistsError:
+    print("Directory already exists")
   sleep(1)
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
@@ -92,7 +101,9 @@ def codenamePage(title, url):
   else:#If there are no errors
     html = BS(webpage.read(), "html.parser")
     #find list of cpus table
-    latestResult = html.find('span',{'id':title+'_Processors'}).parent
+    #need to replace spaces with '_' 
+    titleNew = title.replace(' ','_')
+    latestResult = html.find('span',{'id':titleNew+'_Processors'}).parent
     latestResult = (latestResult.find_next_sibling('div').find('table'))
     #latestResult = html.findAll('table')[1]
     #print(latestResult)
@@ -112,23 +123,15 @@ def codenamePage(title, url):
     if titles != []:
       for i in tableRows:
         td = i.findAll('td')
-        minValues = []
         count = 0
         for j in td:
           temp = j.getText().replace(u'\xa0', ' ')
-          
-          #if "," in temp:
-          #  temp = temp.split(",")[0]
-          minValues.append({titles[count]:temp})
 
           nextUrl = j.find('a', href=True)
           if nextUrl:
-            statsPage(BASE_URL + nextUrl['href'])
+            statsPage(BASE_URL + nextUrl['href'],title)
 
           count = count +1
-        values.append(minValues)
-      for each in values:
-        print(each)
         
       
 
@@ -148,7 +151,7 @@ while True:
     #print(latestResult)
     latestResult = latestResult.findAll('a', href=True)
     for each in latestResult:
-      if "/wiki/amd/cores/" in each["href"]:
+      if "/wiki/" in each["href"] and '/cores/' in each["href"]:
         print(each.getText())
         codenamePage(each.getText(),BASE_URL+each["href"])
 
