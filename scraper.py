@@ -60,6 +60,11 @@ class Apu(PcPart):
   renderOutputUnitCount = ""
   gpuBaseFrequency = ""
 
+def organiseData(specs,title):
+
+  with open((title.replace(" ","-"))+'/'+ specs['model number']+'.yaml', 'w') as outfile:
+    yaml.dump(specs, outfile, default_flow_style=False)
+
 def statsPage(url, title):
   print("scraping "+ url+"...")
   sleep(1)
@@ -71,7 +76,8 @@ def statsPage(url, title):
     print("Server could not be found")
   else:#If there are no errors
     html = BS(webpage.read(), "html.parser")
-    latestResult = html.find('table',{'class':'infobox'})
+    
+
     latestResult1 = html.find('div',{'class':'smwfact'}).find('table',{'class':'smwfacttable'})
     stats2 = {}
     statsHtml = latestResult1.findAll('tr')
@@ -79,8 +85,8 @@ def statsPage(url, title):
       if(each.find('td',{'class':'smwpropname'})):
         stats2[each.find('td',{'class':'smwpropname'}).getText().replace(u'\xa0', ' ')] = each.find('td',{'class':'smwprops'}).getText().replace(u'\xa0', ' ')[:-3]
     
-    with open((title.replace(" ","-"))+'/'+ stats2['model number']+'.yaml', 'w') as outfile:
-      yaml.dump(stats2, outfile, default_flow_style=False)
+    return(stats2)
+    
 
 
 def codenamePage(title, url):
@@ -91,6 +97,7 @@ def codenamePage(title, url):
     print("Directory Created ") 
   except FileExistsError:
     print("Directory already exists")
+  specsList = []
   sleep(1)
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
@@ -101,6 +108,10 @@ def codenamePage(title, url):
   else:#If there are no errors
     html = BS(webpage.read(), "html.parser")
     #find list of cpus table
+    latestResult = html.find('table',{'class':'infobox'})
+    #WORKING HERE !!!!!
+    # i can get some info from here but i need some from arch page
+
     #need to replace spaces with '_' 
     titleNew = title.replace(' ','_')
     latestResult = html.find('span',{'id':titleNew+'_Processors'}).parent
@@ -129,16 +140,17 @@ def codenamePage(title, url):
 
           nextUrl = j.find('a', href=True)
           if nextUrl:
-            statsPage(BASE_URL + nextUrl['href'],title)
+            specsList.append(statsPage(BASE_URL + nextUrl['href'],title))
 
           count = count +1
+      #doing smth here with specsList
         
       
 
 
 while True:
   try:
-    webpage = urlopen(req)#Open hltv results page
+    webpage = urlopen(req)#Open microarchitecture page
   except HTTPError as e:#If there is a server error
     print("e")#show the error
   except URLError as e:#If URL does not exist
@@ -146,9 +158,19 @@ while True:
   else:#If there are no errors
     #Scrapes
     html = BS(webpage.read(), "html.parser")#the html is stored
-    #print(html)
+    #find extensions
+    #you can only find extensions on this page
+    latestResult = html.find('table',{'class':'infobox'})
+    labels = latestResult.findAll('td',{'class':'label'})
+    values = latestResult.findAll('td',{'class':'value'})
+    extensions = ''
+    for i in range(len(labels)):
+      if labels[i].getText() == "Extensions":
+        extensions = values[i].getText()
+        break
+    #find list of codenames
     latestResult = html.find('div', {'id':'mw-content-text'}).find('table', {'class':'wikitable'})
-    #print(latestResult)
+    #find the href link
     latestResult = latestResult.findAll('a', href=True)
     for each in latestResult:
       if "/wiki/" in each["href"] and '/cores/' in each["href"]:
