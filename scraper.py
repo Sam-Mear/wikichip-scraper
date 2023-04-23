@@ -61,11 +61,66 @@ class Apu(PcPart):
   gpuBaseFrequency = ""
 
 def organiseData(specs,title):
+  """
+  explanation here
 
-  with open((title.replace(" ","-"))+'/'+ specs['model number']+'.yaml', 'w') as outfile:
-    yaml.dump(specs, outfile, default_flow_style=False)
+  Parameters
+  ----------
+  specs : list
+    list dictionaries of specs
+  
+  Returns
+  ----------
+  dictionary
+    A dictionary of stats scraped from the webpage.
+  """
+  bigDictionary = {}
+  #print(specs['name'])
+  for each in specs:
+    #below tests if it is a gpu or cpu
+    if(each['integrated gpu']):
+      preData = {'name':(each['name']).replace(" ","-"),'humanName':each['name'],'isPart':'true','type':'APU'}
+    else:
+      preData = {'name':(each['name']).replace(" ","-"),'humanName':each['name'],'isPart':'true','type':'CPU'}
+
+    for dictionaryTitle in each:
+      if bigDictionary[dictionaryTitle]:
+        bigDictionary[dictionaryTitle].append(each.dictionaryTitle)
+      else:
+        bigDictionary[dictionaryTitle] = [each[dictionaryTitle]]
+  inherit = {}
+  for dictionaryTitle in bigDictionary:
+    if bigDictionary[dictionaryTitle].len() == specs.len():
+      #check if all the elements in the list are the same.
+      if bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) == bigDictionary[dictionaryTitle].len():
+        #they are! put this in the inherit dictionary.
+        inherit[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
+  #next is to remove the items that made it to the inherit dictionary from the induvidual cpu specs
+  for dictionaryTitle in inherit:
+    for each in specs:
+      if(each[dictionaryTitle]):
+        each.pop(dictionaryTitle)
+
+#  with open((title.replace(" ","-"))+'/'+ each['model number']+'.yaml', 'w') as outfile:
+#    yaml.dump(each, outfile, default_flow_style=False)
 
 def statsPage(url, title):
+  """
+  Once the codename page has been scraped and induvidual CPUs are found,
+  the stats for these CPUs get scraped here.
+
+  Parameters
+  ----------
+  title : str
+    The cpu name of the page we are scraping.
+  url : str
+    The CPU URL we are scraping.
+  
+  Returns
+  ----------
+  dictionary
+    A dictionary of stats scraped from the webpage.
+  """
   print("scraping "+ url+"...")
   sleep(1)
   try:
@@ -90,7 +145,24 @@ def statsPage(url, title):
 
 
 def codenamePage(title, url):
+  """
+  Once the microarchitecture page has been scraped, the codename page gets scraped here.
+  This method finds induvidual CPU pages to send to method statsPage()
+
+  Parameters
+  ----------
+  title : str
+    The Codename of the page we are scraping.
+  url : str, optional
+    The codename URL we are scraping.
+  
+  Returns
+  ----------
+  list
+    A list of dictionaries of the cpu specs from that codename.
+  """
   print("scraping "+ url+"...")
+  #TODO : Test if this page is actually a codename page, if not, return an error.
   try:
     # Create target Directory
     mkdir(title.replace(" ","-"))
@@ -108,9 +180,8 @@ def codenamePage(title, url):
   else:#If there are no errors
     html = BS(webpage.read(), "html.parser")
     #find list of cpus table
-    latestResult = html.find('table',{'class':'infobox'})
+    #latestResult = html.find('div',{'class':'mw-data-after-content'}).find('table',{'class':'smwfacttable'})
     #WORKING HERE !!!!!
-    # i can get some info from here but i need some from arch page
 
     #need to replace spaces with '_' 
     titleNew = title.replace(' ','_')
@@ -144,6 +215,7 @@ def codenamePage(title, url):
 
           count = count +1
       #doing smth here with specsList
+    return specsList
         
       
 
@@ -175,7 +247,8 @@ while True:
     for each in latestResult:
       if "/wiki/" in each["href"] and '/cores/' in each["href"]:
         print(each.getText())
-        codenamePage(each.getText(),BASE_URL+each["href"])
+        specsList = codenamePage(each.getText(),BASE_URL+each["href"])
+        organiseData(specsList)
 
     
     sleep(10)
