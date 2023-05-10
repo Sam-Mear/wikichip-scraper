@@ -60,9 +60,22 @@ class Apu(PcPart):
   renderOutputUnitCount = ""
   gpuBaseFrequency = ""
 
-def organiseData(specs,title):
+def outputData(inherit,specs):
+  title = inherit["core name"].replace(" ","-")
+  with open((title)+'-inherit.yaml', 'w') as outfile:
+    yaml.dump(inherit, outfile, default_flow_style=False)
+  for each in specs:
+    with open((title)+'/'+ each['model number']+'.yaml', 'w') as outfile:
+      yaml.dump(each, outfile, default_flow_style=False)
+
+
+def organiseData(specs):
   """
-  explanation here
+  This functions finds what data is to be added to the inherit file, and what attributes are unique to a CPU
+  TODO : 
+  1. change data to fit SpecDB (i.e.  first launched: January 12, 2021 -> Release Date: '2021-01-12')
+  2. Might be best to put smth in inherit if its the same for 70%+ of the CPUs. just make sure the 30% dont remove the attribute
+    (for example, most Vermeer CPUs came out much earlier than the 5800x3d.)
 
   Parameters
   ----------
@@ -78,28 +91,30 @@ def organiseData(specs,title):
   #print(specs['name'])
   for each in specs:
     #below tests if it is a gpu or cpu
-    if(each['integrated gpu']):
+    if('integrated gpu' in each):
       preData = {'name':(each['name']).replace(" ","-"),'humanName':each['name'],'isPart':'true','type':'APU'}
     else:
       preData = {'name':(each['name']).replace(" ","-"),'humanName':each['name'],'isPart':'true','type':'CPU'}
 
     for dictionaryTitle in each:
-      if bigDictionary[dictionaryTitle]:
-        bigDictionary[dictionaryTitle].append(each.dictionaryTitle)
+      if dictionaryTitle in bigDictionary:
+        bigDictionary[dictionaryTitle].append(each[dictionaryTitle])
       else:
         bigDictionary[dictionaryTitle] = [each[dictionaryTitle]]
   inherit = {}
   for dictionaryTitle in bigDictionary:
-    if bigDictionary[dictionaryTitle].len() == specs.len():
+    if len(bigDictionary[dictionaryTitle]) == len(specs):
       #check if all the elements in the list are the same.
-      if bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) == bigDictionary[dictionaryTitle].len():
+      if bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) == len(bigDictionary[dictionaryTitle]):
         #they are! put this in the inherit dictionary.
         inherit[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
   #next is to remove the items that made it to the inherit dictionary from the induvidual cpu specs
   for dictionaryTitle in inherit:
     for each in specs:
-      if(each[dictionaryTitle]):
-        each.pop(dictionaryTitle)
+      each.pop(dictionaryTitle)
+  #print(inherit)
+  #print(specs)
+  return inherit,specs
 
 #  with open((title.replace(" ","-"))+'/'+ each['model number']+'.yaml', 'w') as outfile:
 #    yaml.dump(each, outfile, default_flow_style=False)
@@ -126,7 +141,7 @@ def statsPage(url, title):
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
   except HTTPError as e:#If there is a server error
-    print("e")#show the error
+    print(e)#show the error
   except URLError as e:#If URL does not exist
     print("Server could not be found")
   else:#If there are no errors
@@ -174,7 +189,7 @@ def codenamePage(title, url):
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
   except HTTPError as e:#If there is a server error
-    print("e")#show the error
+    print(e)#show the error
   except URLError as e:#If URL does not exist
     print("Server could not be found")
   else:#If there are no errors
@@ -224,7 +239,7 @@ while True:
   try:
     webpage = urlopen(req)#Open microarchitecture page
   except HTTPError as e:#If there is a server error
-    print("e")#show the error
+    print(e)#show the error
   except URLError as e:#If URL does not exist
     print("Server could not be found")
   else:#If there are no errors
@@ -248,7 +263,8 @@ while True:
       if "/wiki/" in each["href"] and '/cores/' in each["href"]:
         print(each.getText())
         specsList = codenamePage(each.getText(),BASE_URL+each["href"])
-        organiseData(specsList)
+        inherit, specs = organiseData(specsList)
+        outputData(inherit,specs)
 
     
     sleep(10)
