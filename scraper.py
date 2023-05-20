@@ -164,9 +164,9 @@ def mapCPUData(cpuInfo):
   #All extensions: FMA4 FMA3 AVX AMD-V .etc
 
   
-  print(data)
-  with open('TEST.yaml', 'w') as outfile:
-    yaml.dump(data, outfile, default_flow_style=False)
+  #print(data)
+  #with open('TEST.yaml', 'w') as outfile:
+  #  yaml.dump(data, outfile, default_flow_style=False)
   return data
 
 def mapInheritData(cpuInfo):
@@ -175,16 +175,92 @@ def mapInheritData(cpuInfo):
   data['name'] = cpuInfo['core name'].replace(" ","-")
   data['hidden'] = True
   data['data'] = {}
-  data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
+  try:
+    data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
+  except:
+    print('Release date is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['L1 Cache (Data)'] = cpuInfo['l1d$ size'].split(" (")[0]
+  except:
+    print('L1 Cache (Data) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['L1 Cache (Instruction)'] = cpuInfo['l1i$ size'].split(" (")[0]
+  except:
+    print('L1 Cache (Data) not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['L2 Cache (Total)'] = cpuInfo['l2$ size'].split(" (")[0]
+  except:
+    print('L2 Cache is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['L3 Cache (Total)'] = cpuInfo['l3$ size'].split(" (")[0]
+  except:
+    print('L3 cache is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['TDP'] = cpuInfo['tdp'].split(" (")[0]
+  except:
+    print('TDP is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Core Count'] = int(cpuInfo['core count'].split(" (")[0])
+  except:
+    print('Core count is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Thread Count'] = int(cpuInfo['thread count'].split(" (")[0])
+  except:
+    print('Thread count is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Base Frequency'] = cpuInfo['base frequency'].split(" (")[0]
+  except:
+    print('Base frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Boost Frequency'] = cpuInfo['turbo frequency'].split(" (")[0]
+  except:
+    print('Boost frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Lithography'] = cpuInfo['process'].split(" (")[0]
+  except:
+    print('Lithography not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Sockets'] = [cpuInfo['socket']]#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
+    data['data']['Socket'] = [cpuInfo['socket']]#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
+  except:
+    print('Socket is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Unlocked'] = not cpuInfo['has locked clock multiplier']
+  except:
+    print('overclockable(unlocked) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Architecture'] = cpuInfo['microarchitecture']
+  except:
+    print('Architecture is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Memory Type'] = cpuInfo['supported memory type'].split('-')[0]
+  except:
+    print('Memory type is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz" #This may not be consistent.
+  except:
+    print('Max memory frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Max Memory Channels'] = int(cpuInfo['max memory channels'])
+  except:
+    print('Max memory channels not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  try:
+    data['data']['Stepping'] = cpuInfo['core stepping']
+  except:
+    print('Core stepping is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+  #XFR Support
+  #All extensions: FMA4 FMA3 AVX AMD-V .etc
   return data
 
 def outputData(inherit,specs):
   title = inherit["core name"].replace(" ","-")
+  inherit1 = mapInheritData(inherit)
   with open((title)+'-inherit.yaml', 'w') as outfile:
-    yaml.dump(inherit, outfile, default_flow_style=False)
+    yaml.dump(inherit1, outfile, default_flow_style=False)
   for each in specs:
+    each1 = mapCPUData(each)
     with open((title)+'/'+ each['model number']+'.yaml', 'w') as outfile:
-      yaml.dump(each, outfile, default_flow_style=False)
+      yaml.dump(each1, outfile, default_flow_style=False)
 
 
 def organiseData(specs):
@@ -207,7 +283,6 @@ def organiseData(specs):
   """
   bigDictionary = {}
   #print(specs['name'])
-  specs1 = mapCPUData(specs[1])
   for each in specs:
     #below tests if it is a gpu or cpu
     if('integrated gpu' in each):
