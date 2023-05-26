@@ -4,6 +4,72 @@
 #(CPUs with integrated graphics.)
 #
 #
+#
+#######------TODO--------#######
+#gpu base frequency
+#gpu boost frequency
+#fp32 compute
+#render output unit count
+#vram capacity
+#GPU
+#GPU Model
+#Die size
+#Module Count
+#FP64 Compute
+#XFR Frequency
+#Shader Processing Count
+#Texture mapping unit count
+#VRAM Type
+#VRAM frequency
+#VRAM bandwidth
+#VRAM bus width
+#maximum VRAM capacity
+#compatible chipsets
+#AVX/SSE/MMX (['AVX-512', 'AVX2', 'AVX',
+#					'SSE 4.2', 'SSE 4.1', 'SSE4a', 'SSSE3', 'SSE3', 'SSE2', 'SSE', 
+#					'EMMX', 'MMX',
+#					'No'])
+#FMA4 bool
+#FMA3 bool
+#BMI {BMI2 BMI No}
+#AES bool
+#sha bool
+#other extensions
+#XFR Support
+#DirectX Support
+#HLSL Shader model
+#OpenGL support
+#Vulkan support
+#OpenCL Support
+#Freesync support
+#crossfire support
+#max displays
+
+#######------DONE--------#######
+#Base frequency -
+#boost frequency -
+#core count -
+#thread count -
+#release date -
+#TDP -
+#Architecture -
+#Codename
+#Socket -
+#Lithography -
+#Stepping -
+#L1 cache i -
+#l1 cache d -
+#l2 cache -
+#l3 cache -
+#max memory channels -
+#memory type -
+#max memory frequency -
+#Unlocked -
+#
+#
+#
+#
+#
 ######
 
 
@@ -74,6 +140,10 @@ def mapCPUData(cpuInfo):
   # WARNING : 
   # TODO : 
   ####### WIKICHIP CAN SOMETIMES USE DIFFERENT NAMES FOR THESE THINGS SO THIS HAS TO BE CONSIDERED.
+  if('integrated gpu' in each):
+    apu = True
+  else:
+    apu = False
   data = {}
   try:
     data['name'] = cpuInfo['name'].replace(" ","-")
@@ -285,11 +355,7 @@ def organiseData(specs):
   #print(specs['name'])
   for each in specs:
     #below tests if it is a gpu or cpu
-    if('integrated gpu' in each):
-      preData = {'name':(each['name']).replace(" ","-"),'humanName':each['name'],'isPart':'true','type':'APU'}
-    else:
-      preData = {'name':(each['name']).replace(" ","-"),'humanName':each['name'],'isPart':'true','type':'CPU'}
-
+    
     for dictionaryTitle in each:
       if dictionaryTitle in bigDictionary:
         bigDictionary[dictionaryTitle].append(each[dictionaryTitle])
