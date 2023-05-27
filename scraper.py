@@ -25,16 +25,6 @@
 #VRAM bus width
 #maximum VRAM capacity
 #compatible chipsets
-#AVX/SSE/MMX (['AVX-512', 'AVX2', 'AVX',
-#					'SSE 4.2', 'SSE 4.1', 'SSE4a', 'SSSE3', 'SSE3', 'SSE2', 'SSE', 
-#					'EMMX', 'MMX',
-#					'No'])
-#FMA4 bool
-#FMA3 bool
-#BMI {BMI2 BMI No}
-#AES bool
-#sha bool
-#other extensions
 #XFR Support
 #DirectX Support
 #HLSL Shader model
@@ -65,6 +55,16 @@
 #memory type -
 #max memory frequency -
 #Unlocked -
+#FMA4 bool
+#FMA3 bool
+#AES bool
+#sha bool
+#BMI {BMI2 BMI No}
+#AVX/SSE/MMX (['AVX-512', 'AVX2', 'AVX',
+#					'SSE 4.2', 'SSE 4.1', 'SSE4a', 'SSSE3', 'SSE3', 'SSE2', 'SSE', 
+#					'EMMX', 'MMX',
+#					'No'])
+#other extensions
 #
 #
 #
@@ -85,55 +85,6 @@ BASE_URL = "https://en.wikichip.org"
 URL = "https://en.wikichip.org/wiki/amd/microarchitectures/zen_3"#Would be the user input
 req = Request(URL, headers={'User-Agent':'Mozilla/6.0'})
 
-
-class Architerture():
-  name = ""
-  humanName = ""
-  type = ""
-  lithography = ""
-  releaseDay = ""
-  socket = ""
-  parts = []
-
-class PcPart():
-  header = ""
-  name = ""
-  humanName=""
-  type = ""
-  releaseDate = ""
-  coreCount = ""
-  threadCount = ""
-  l2Cache = ""
-  l3Cache = ""
-  baseFrequency = ""
-  boostFrequency = ""
-  tdp = ""
-  l1DataCache = ""
-  l1InstructionCache = ""
-  unlocked = ""
-  memoryType = ""
-  maxMemoryFrequency = ""
-  xfr = ""
-  avxSseMmx = ""
-  fma4 = ""
-  fma3 = ""
-  bmi = ""
-  aes = ""
-  sha = ""
-  otherExtensions = []
-  compatibleChipsets = []
-  steppings = []
-
-  #def __innit__(self, ):
-  #
-
-class Apu(PcPart):
-  gpuModel = ""
-  maxDisplays = ""
-  shaderProcessorCount = ""
-  textureMappingUnitCount = ""
-  renderOutputUnitCount = ""
-  gpuBaseFrequency = ""
 
 def mapCPUData(cpuInfo):
   # Map the output to the expected format
@@ -239,7 +190,7 @@ def mapCPUData(cpuInfo):
   #  yaml.dump(data, outfile, default_flow_style=False)
   return data
 
-def mapInheritData(cpuInfo):
+def mapInheritData(cpuInfo, extensions):
   # Map the output to the expected format
   data = {}
   data['name'] = cpuInfo['core name'].replace(" ","-")
@@ -320,24 +271,154 @@ def mapInheritData(cpuInfo):
     print('Core stepping is not present. THIS NEEDS TO BE FOUND BEFORE PR')
   #XFR Support
   #All extensions: FMA4 FMA3 AVX AMD-V .etc
+  #Gotta make extensions from string to list.
+  extensionsL = extensions.split(", ")
+  if 'FMA4' in extensionsL:
+    data['data']['FMA4'] = True
+    extensionsL.remove('FMA4')
+  if 'FMA3' in extensionsL:
+    data['data']['FMA3'] = True
+    extensionsL.remove('FMA3')
+  if 'AES' in extensionsL:
+    data['data']['AES'] = True
+    extensionsL.remove('AES')
+  #SHA
+  if 'SHA' in extensionsL:
+    data['data']['SHA'] = True
+    extensionsL.remove('SHA')
+  #BMI
+  if 'BMI2' in extensionsL:
+    data['data']['BMI'] = 'BMI2'
+    extensionsL.remove('BMI2')
+    extensionsL.remove('BMI')
+  elif 'BMI' in extensionsL:
+    data['data']['BMI'] = 'BMI'
+    extensionsL.remove('BMI')
+  else:
+    data['data']['BMI'] = 'No'
+  #AVX/SSE/MMX
+  if 'AVX-512' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'AVX-512'
+    if 'AVX-512' in extensionsL: extensionsL.remove('AVX-512')
+    if 'AVX2' in extensionsL: extensionsL.remove('AVX2')
+    if 'AVX' in extensionsL: extensionsL.remove('AVX')
+    if 'SSE4.2' in extensionsL: extensionsL.remove('SSE4.2')
+    if 'SSE4.1' in extensionsL: extensionsL.remove('SSE4.1')
+    if 'SSE4a' in extensionsL: extensionsL.remove('SSE4a')
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'AVX2' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'AVX2'
+    if 'AVX2' in extensionsL: extensionsL.remove('AVX2')
+    if 'AVX' in extensionsL: extensionsL.remove('AVX')
+    if 'SSE4.2' in extensionsL: extensionsL.remove('SSE4.2')
+    if 'SSE4.1' in extensionsL: extensionsL.remove('SSE4.1')
+    if 'SSE4a' in extensionsL: extensionsL.remove('SSE4a')
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'AVX' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'AVX'
+    if 'AVX' in extensionsL: extensionsL.remove('AVX')
+    if 'SSE4.2' in extensionsL: extensionsL.remove('SSE4.2')
+    if 'SSE4.1' in extensionsL: extensionsL.remove('SSE4.1')
+    if 'SSE4a' in extensionsL: extensionsL.remove('SSE4a')
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSE4.2' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSE 4.2'
+    if 'SSE4.2' in extensionsL: extensionsL.remove('SSE4.2')
+    if 'SSE4.1' in extensionsL: extensionsL.remove('SSE4.1')
+    if 'SSE4a' in extensionsL: extensionsL.remove('SSE4a')
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSE4.1' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSE 4.1'
+    if 'SSE4.1' in extensionsL: extensionsL.remove('SSE4.1')
+    if 'SSE4a' in extensionsL: extensionsL.remove('SSE4a')
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSE4a' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSE4a'
+    if 'SSE4a' in extensionsL: extensionsL.remove('SSE4a')
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSSE3' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSSE3'
+    if 'SSSE3' in extensionsL: extensionsL.remove('SSSE3')
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSE3' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSE3'
+    if 'SSE3' in extensionsL: extensionsL.remove('SSE3')
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSE2' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSE2'
+    if 'SSE2' in extensionsL: extensionsL.remove('SSE2')
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'SSE' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'SSE'
+    if 'SSE' in extensionsL: extensionsL.remove('SSE')
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'EMMX' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'EMMX'
+    if 'EMMX' in extensionsL: extensionsL.remove('EMMX')
+    if 'MMX' in extensionsL: extensionsL.remove('MMX')
+  elif 'MMX' in extensionsL:
+    data['data']['AVX/SSE/MMX'] = 'MMX'
+    extensionsL.remove('MMX')
+  else:
+    data['data']['AVX/SSE/MMX'] = 'No'
+  data['data']['Other Extensions'] = extensionsL
   return data
 
-def outputData(inherit,specs):
+def outputData(inherit,specs, extensions):
   title = inherit["core name"].replace(" ","-")
-  inherit1 = mapInheritData(inherit)
+  inherit1 = mapInheritData(inherit, extensions)
   with open((title)+'-inherit.yaml', 'w') as outfile:
-    yaml.dump(inherit1, outfile, default_flow_style=False)
+    yaml.dump(inherit1, outfile, default_flow_style=False, sort_keys=False)
   for each in specs:
     each1 = mapCPUData(each)
     with open((title)+'/'+ each['model number']+'.yaml', 'w') as outfile:
-      yaml.dump(each1, outfile, default_flow_style=False)
+      yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 
 
 def organiseData(specs):
   """
   This functions finds what data is to be added to the inherit file, and what attributes are unique to a CPU
   TODO : 
-  1. change data to fit SpecDB (i.e.  first launched: January 12, 2021 -> Release Date: '2021-01-12')
   2. Might be best to put smth in inherit if its the same for 70%+ of the CPUs. just make sure the 30% dont remove the attribute
     (for example, most Vermeer CPUs came out much earlier than the 5800x3d.)
 
@@ -455,8 +536,6 @@ def codenamePage(title, url):
   else:#If there are no errors
     html = BS(webpage.read(), "html.parser")
     #find list of cpus table
-    #latestResult = html.find('div',{'class':'mw-data-after-content'}).find('table',{'class':'smwfacttable'})
-    #WORKING HERE !!!!!
 
     #need to replace spaces with '_' 
     titleNew = title.replace(' ','_')
@@ -476,7 +555,7 @@ def codenamePage(title, url):
         for j in th:
           titles.append(j.getText())
         break
-    print(titles)
+    #print(titles)
     if titles != []:
       for i in tableRows:
         td = i.findAll('td')
@@ -515,6 +594,7 @@ while True:
       if labels[i].getText() == "Extensions":
         extensions = values[i].getText()
         break
+    print(type(extensions))
     #find list of codenames
     latestResult = html.find('div', {'id':'mw-content-text'}).find('table', {'class':'wikitable'})
     #find the href link
@@ -524,7 +604,7 @@ while True:
         print(each.getText())
         specsList = codenamePage(each.getText(),BASE_URL+each["href"])
         inherit, specs = organiseData(specsList)
-        outputData(inherit,specs)
+        outputData(inherit,specs, extensions)
 
     
     sleep(10)
