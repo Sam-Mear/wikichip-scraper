@@ -82,12 +82,12 @@ from urllib.error import HTTPError,URLError
 from bs4 import BeautifulSoup as BS
 
 BASE_URL = "https://en.wikichip.org"
-URL = "https://en.wikichip.org/wiki/amd/microarchitectures/zen_3"#Would be the user input
-req = Request(URL, headers={'User-Agent':'Mozilla/6.0'})
 
 
-def mapCPUData(cpuInfo):
+def mapCPUData(cpuInfo, title):
+  """
   # Map the output to the expected format
+  """
   # WARNING : 
   # TODO : 
   ####### WIKICHIP CAN SOMETIMES USE DIFFERENT NAMES FOR THESE THINGS SO THIS HAS TO BE CONSIDERED.
@@ -100,175 +100,171 @@ def mapCPUData(cpuInfo):
     data['name'] = cpuInfo['name'].replace(" ","-")
     data['humanName'] = cpuInfo['name'] 
   except:
-    print('name is not present. THIS NEEDS TO BE FOUND BEFORE PR. Perhaps the scraper failed as wikichip changed?')
+    print('name is not present. Ignored. Perhaps the scraper failed as wikichip changed?')
   data['isPart'] = True
   data['type'] = 'CPU'
   try:
-    data['inherits'] = [cpuInfo['core name'].replace(" ","-")]
+    data['inherits'] = [title]
   except:
-    print('core name(inherits) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('core name(inherits) is not present. Ignored')
   data['data'] = {}
   try:
     data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
   except:
-    print('Release date is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Release date is not present. Ignored')
   try:
     data['data']['L1 Cache (Data)'] = cpuInfo['l1d$ size'].split(" (")[0]
   except:
-    print('L1 Cache (Data) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L1 Cache (Data) is not present. Ignored')
   try:
     data['data']['L1 Cache (Instruction)'] = cpuInfo['l1i$ size'].split(" (")[0]
   except:
-    print('L1 Cache (Data) not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L1 Cache (Data) not present. Ignored')
   try:
     data['data']['L2 Cache (Total)'] = cpuInfo['l2$ size'].split(" (")[0]
   except:
-    print('L2 Cache is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L2 Cache is not present. Ignored')
   try:
     data['data']['L3 Cache (Total)'] = cpuInfo['l3$ size'].split(" (")[0]
   except:
-    print('L3 cache is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L3 cache is not present. Ignored')
   try:
     data['data']['TDP'] = cpuInfo['tdp'].split(" (")[0]
   except:
-    print('TDP is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('TDP is not present. Ignored')
   try:
     data['data']['Core Count'] = int(cpuInfo['core count'].split(" (")[0])
   except:
-    print('Core count is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Core count is not present. Ignored')
   try:
     data['data']['Thread Count'] = int(cpuInfo['thread count'].split(" (")[0])
   except:
-    print('Thread count is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Thread count is not present. Ignored')
   try:
     data['data']['Base Frequency'] = cpuInfo['base frequency'].split(" (")[0]
   except:
-    print('Base frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Base frequency is not present. Ignored')
   try:
     data['data']['Boost Frequency'] = cpuInfo['turbo frequency'].split(" (")[0]
   except:
-    print('Boost frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Boost frequency is not present. Ignored')
   try:
     data['data']['Lithography'] = cpuInfo['process'].split(" (")[0]
   except:
-    print('Lithography not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Lithography not present. Ignored')
   try:
-    data['data']['Sockets'] = [cpuInfo['socket']]#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
-    data['data']['Socket'] = [cpuInfo['socket']]#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
+    #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
+    data['data']['Socket'] = cpuInfo['socket']#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
   except:
-    print('Socket is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Socket is not present. Ignored')
   try:
     data['data']['Unlocked'] = not cpuInfo['has locked clock multiplier']
   except:
-    print('overclockable(unlocked) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('overclockable(unlocked) is not present. Ignored')
   try:
     data['data']['Architecture'] = cpuInfo['microarchitecture']
   except:
-    print('Architecture is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Architecture is not present. Ignored')
   try:
     data['data']['Memory Type'] = cpuInfo['supported memory type'].split('-')[0]
   except:
-    print('Memory type is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Memory type is not present. Ignored')
   try:
     data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz" #This may not be consistent.
   except:
-    print('Max memory frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Max memory frequency is not present. Ignored')
   try:
     data['data']['Max Memory Channels'] = int(cpuInfo['max memory channels'])
   except:
-    print('Max memory channels not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Max memory channels not present. Ignored')
   try:
     data['data']['Stepping'] = cpuInfo['core stepping']
   except:
-    print('Core stepping is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Core stepping is not present. Ignored')
   #XFR Support
-  #All extensions: FMA4 FMA3 AVX AMD-V .etc
-
-  
-  #print(data)
-  #with open('TEST.yaml', 'w') as outfile:
-  #  yaml.dump(data, outfile, default_flow_style=False)
   return data
 
 def mapInheritData(cpuInfo, extensions):
-  # Map the output to the expected format
+  """
+    Map the output to the expected format
+  """
   data = {}
-  data['name'] = cpuInfo['core name'].replace(" ","-")
   data['hidden'] = True
+  data['name'] = cpuInfo['core name'].replace(" ","-")
   data['data'] = {}
   try:
     data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
   except:
-    print('Release date is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Release date is not present. Ignored')
   try:
     data['data']['L1 Cache (Data)'] = cpuInfo['l1d$ size'].split(" (")[0]
   except:
-    print('L1 Cache (Data) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L1 Cache (Data) is not present. Ignored')
   try:
     data['data']['L1 Cache (Instruction)'] = cpuInfo['l1i$ size'].split(" (")[0]
   except:
-    print('L1 Cache (Data) not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L1 Cache (Data) not present. Ignored')
   try:
     data['data']['L2 Cache (Total)'] = cpuInfo['l2$ size'].split(" (")[0]
   except:
-    print('L2 Cache is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L2 Cache is not present. Ignored')
   try:
     data['data']['L3 Cache (Total)'] = cpuInfo['l3$ size'].split(" (")[0]
   except:
-    print('L3 cache is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('L3 cache is not present. Ignored')
   try:
     data['data']['TDP'] = cpuInfo['tdp'].split(" (")[0]
   except:
-    print('TDP is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('TDP is not present. Ignored')
   try:
     data['data']['Core Count'] = int(cpuInfo['core count'].split(" (")[0])
   except:
-    print('Core count is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Core count is not present. Ignored')
   try:
     data['data']['Thread Count'] = int(cpuInfo['thread count'].split(" (")[0])
   except:
-    print('Thread count is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Thread count is not present. Ignored')
   try:
     data['data']['Base Frequency'] = cpuInfo['base frequency'].split(" (")[0]
   except:
-    print('Base frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Base frequency is not present. Ignored')
   try:
     data['data']['Boost Frequency'] = cpuInfo['turbo frequency'].split(" (")[0]
   except:
-    print('Boost frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Boost frequency is not present. Ignored')
   try:
     data['data']['Lithography'] = cpuInfo['process'].split(" (")[0]
   except:
-    print('Lithography not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Lithography not present. Ignored')
   try:
-    data['data']['Sockets'] = [cpuInfo['socket']]#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
-    data['data']['Socket'] = [cpuInfo['socket']]#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
+    #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
+    data['data']['Socket'] = cpuInfo['socket']#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
   except:
-    print('Socket is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Socket is not present. Ignored')
   try:
     data['data']['Unlocked'] = not cpuInfo['has locked clock multiplier']
   except:
-    print('overclockable(unlocked) is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('overclockable(unlocked) is not present. Ignored')
   try:
     data['data']['Architecture'] = cpuInfo['microarchitecture']
   except:
-    print('Architecture is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Architecture is not present. Ignored')
   try:
     data['data']['Memory Type'] = cpuInfo['supported memory type'].split('-')[0]
   except:
-    print('Memory type is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Memory type is not present. Ignored')
   try:
     data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz" #This may not be consistent.
   except:
-    print('Max memory frequency is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Max memory frequency is not present. Ignored')
   try:
     data['data']['Max Memory Channels'] = int(cpuInfo['max memory channels'])
   except:
-    print('Max memory channels not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Max memory channels not present. Ignored')
   try:
     data['data']['Stepping'] = cpuInfo['core stepping']
   except:
-    print('Core stepping is not present. THIS NEEDS TO BE FOUND BEFORE PR')
+    print('Core stepping is not present. Ignored')
   #XFR Support
   #All extensions: FMA4 FMA3 AVX AMD-V .etc
   #Gotta make extensions from string to list.
@@ -276,16 +272,24 @@ def mapInheritData(cpuInfo, extensions):
   if 'FMA4' in extensionsL:
     data['data']['FMA4'] = True
     extensionsL.remove('FMA4')
+  else:
+    data['data']['FMA4'] = False
   if 'FMA3' in extensionsL:
     data['data']['FMA3'] = True
     extensionsL.remove('FMA3')
+  else:
+    data['data']['FMA3'] = False
   if 'AES' in extensionsL:
     data['data']['AES'] = True
     extensionsL.remove('AES')
+  else:
+    data['data']['AES'] = False
   #SHA
   if 'SHA' in extensionsL:
     data['data']['SHA'] = True
     extensionsL.remove('SHA')
+  else:
+    data['data']['SHA'] = False
   #BMI
   if 'BMI2' in extensionsL:
     data['data']['BMI'] = 'BMI2'
@@ -405,12 +409,15 @@ def mapInheritData(cpuInfo, extensions):
   return data
 
 def outputData(inherit,specs, extensions):
+  """
+  This functions outputs the data into YAML files. It calls mapCPUData and mapInheritData to map the wikichip data to SpecDB data.
+  """
   title = inherit["core name"].replace(" ","-")
   inherit1 = mapInheritData(inherit, extensions)
   with open((title)+'-inherit.yaml', 'w') as outfile:
     yaml.dump(inherit1, outfile, default_flow_style=False, sort_keys=False)
   for each in specs:
-    each1 = mapCPUData(each)
+    each1 = mapCPUData(each, title)
     with open((title)+'/'+ each['model number']+'.yaml', 'w') as outfile:
       yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 
@@ -477,7 +484,7 @@ def statsPage(url, title):
   dictionary
     A dictionary of stats scraped from the webpage.
   """
-  print("scraping "+ url+"...")
+  print("scraping stats page "+ url+"...")
   sleep(1)
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
@@ -517,7 +524,7 @@ def codenamePage(title, url):
   list
     A list of dictionaries of the cpu specs from that codename.
   """
-  print("scraping "+ url+"...")
+  print("scraping codename page "+ url+"...")
   #TODO : Test if this page is actually a codename page, if not, return an error.
   try:
     # Create target Directory
@@ -575,36 +582,39 @@ def codenamePage(title, url):
 
 
 while True:
-  try:
-    webpage = urlopen(req)#Open microarchitecture page
-  except HTTPError as e:#If there is a server error
-    print(e)#show the error
-  except URLError as e:#If URL does not exist
-    print("Server could not be found")
-  else:#If there are no errors
-    #Scrapes
-    html = BS(webpage.read(), "html.parser")#the html is stored
-    #find extensions
-    #you can only find extensions on this page
-    latestResult = html.find('table',{'class':'infobox'})
-    labels = latestResult.findAll('td',{'class':'label'})
-    values = latestResult.findAll('td',{'class':'value'})
-    extensions = ''
-    for i in range(len(labels)):
-      if labels[i].getText() == "Extensions":
-        extensions = values[i].getText()
-        break
-    print(type(extensions))
-    #find list of codenames
-    latestResult = html.find('div', {'id':'mw-content-text'}).find('table', {'class':'wikitable'})
-    #find the href link
-    latestResult = latestResult.findAll('a', href=True)
-    for each in latestResult:
-      if "/wiki/" in each["href"] and '/cores/' in each["href"]:
-        print(each.getText())
-        specsList = codenamePage(each.getText(),BASE_URL+each["href"])
-        inherit, specs = organiseData(specsList)
-        outputData(inherit,specs, extensions)
+  print("Make sure to delete the APU data it gives you. This wont be correct.")
+  url = input("Enter a wikichip microarchitecture page like:https://en.wikichip.org/wiki/amd/microarchitectures/zen_3\n")
+  if "wikichip.org/wiki" in url:
+    req = Request(url, headers={'User-Agent':'Mozilla/6.0'})
+    try:
+      webpage = urlopen(req)#Open microarchitecture page
+    except HTTPError as e:#If there is a server error
+      print(e)#show the error
+    except URLError as e:#If URL does not exist
+      print("Server could not be found")
+    else:#If there are no errors
+      #Scrapes
+      html = BS(webpage.read(), "html.parser")#the html is stored
+      #find extensions
+      #you can only find extensions on this page
+      latestResult = html.find('table',{'class':'infobox'})
+      labels = latestResult.findAll('td',{'class':'label'})
+      values = latestResult.findAll('td',{'class':'value'})
+      extensions = ''
+      for i in range(len(labels)):
+        if labels[i].getText() == "Extensions":
+          extensions = values[i].getText()
+          break
+      #find list of codenames
+      latestResult = html.find('div', {'id':'mw-content-text'}).find('table', {'class':'wikitable'})
+      #find the href link
+      latestResult = latestResult.findAll('a', href=True)
+      for each in latestResult:
+        if "/wiki/" in each["href"] and '/cores/' in each["href"]:
+          #print(each.getText())
+          specsList = codenamePage(each.getText(),BASE_URL+each["href"])
+          inherit, specs = organiseData(specsList)
+          outputData(inherit,specs, extensions)
 
-    
-    sleep(10)
+      
+  url=""
