@@ -85,7 +85,7 @@ BASE_URL = "https://en.wikichip.org"
 SLEEP_DURATION = 1.5
 
 
-def mapCPUData(cpuInfo, title):
+def mapCPUData(cpuInfo, title, inheritLabels):
   """
   # Map the output to the expected format
   """
@@ -109,163 +109,229 @@ def mapCPUData(cpuInfo, title):
   except:
     print('core name(inherits) is not present. Ignored')
   data['data'] = {}
-  try:
+  if 'first launched' in cpuInfo:
     data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
-  except:
-    print('Release date is not present. Ignored')
-  try:
+  else:
+    if 'first launched' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Release Date")
+
+  if 'l1d$ size' in cpuInfo:
     data['data']['L1 Cache (Data)'] = cpuInfo['l1d$ size'].split(" (")[0]
-  except:
-    print('L1 Cache (Data) is not present. Ignored')
-  try:
+  else:
+    if 'l1d$ size' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing L1 Cache (Data)")
+
+  if 'l1i$ size' in cpuInfo:
     data['data']['L1 Cache (Instruction)'] = cpuInfo['l1i$ size'].split(" (")[0]
-  except:
-    print('L1 Cache (Data) not present. Ignored')
-  try:
+  else:
+    if 'l1i$ size' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing L1 Cache (Instruction)")
+
+  if 'l2$ size' in cpuInfo:
     data['data']['L2 Cache (Total)'] = cpuInfo['l2$ size'].split(" (")[0]
-  except:
-    print('L2 Cache is not present. Ignored')
-  try:
+  else:
+    if 'l2$ size' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing L2 Cache (Total)")
+
+  if 'l3$ size' in cpuInfo:
     data['data']['L3 Cache (Total)'] = cpuInfo['l3$ size'].split(" (")[0]
-  except:
-    print('L3 cache is not present. Ignored')
-  try:
+  else:
+    if 'l3$ size' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing L3 cache (Total)")
+
+  if 'tdp' in cpuInfo:
     data['data']['TDP'] = cpuInfo['tdp'].split(" (")[0]
-  except:
-    print('TDP is not present. Ignored')
-  try:
-    data['data']['Core Count'] = int(cpuInfo['core count'].split(" (")[0])
-  except:
-    print('Core count is not present. Ignored')
-  try:
-    data['data']['Thread Count'] = int(cpuInfo['thread count'].split(" (")[0])
-  except:
-    print('Thread count is not present. Ignored')
-  try:
+  else:
+    if 'tdp' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing TDP")
+
+  if 'core count' in cpuInfo:
+    try:
+      data['data']['Core Count'] = int(cpuInfo['core count'].split(" (")[0])
+    except ValueError:
+      print('Invalid Core count value. Ignored')
+  else:
+    if 'core count' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Core Count")
+
+  if 'thread count' in cpuInfo:
+    try:
+      data['data']['Thread Count'] = int(cpuInfo['thread count'].split(" (")[0])
+    except ValueError:
+      print('Invalid Thread count value. Ignored')
+  else:
+    if 'thread count' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Thread Count")
+
+  if 'base frequency' in cpuInfo:
     data['data']['Base Frequency'] = cpuInfo['base frequency'].split(" (")[0]
-  except:
-    print('Base frequency is not present. Ignored')
-  try:
+  else:
+    if 'base frequency' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Base Frequency")
+
+  if 'turbo frequency' in cpuInfo:
     data['data']['Boost Frequency'] = cpuInfo['turbo frequency'].split(" (")[0]
-  except:
-    print('Boost frequency is not present. Ignored')
-  try:
+  else:
+    if 'turbo frequency' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Boost Frequency")
+
+  if 'process' in cpuInfo:
     data['data']['Lithography'] = cpuInfo['process'].split(" (")[0]
-  except:
-    print('Lithography not present. Ignored')
-  try:
-    #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
-    data['data']['Socket'] = cpuInfo['socket']#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
-  except:
-    print('Socket is not present. Ignored')
-  try:
+  else:
+    if 'process' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Lithography")
+
+  if 'socket' in cpuInfo:
+    data['data']['Socket'] = cpuInfo['socket']
+  else:
+    if 'socket' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Socket")
+
+  if 'has locked clock multiplier' in cpuInfo:
     data['data']['Unlocked'] = not cpuInfo['has locked clock multiplier']
-  except:
-    print('overclockable(unlocked) is not present. Ignored')
-  try:
+  else:
+    if 'has locked clock multiplier' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Unlocked")
+
+  if 'microarchitecture' in cpuInfo:
     data['data']['Architecture'] = cpuInfo['microarchitecture']
-  except:
-    print('Architecture is not present. Ignored')
-  try:
+  else:
+    if 'microarchitecture' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Architecture")
+
+  if 'supported memory type' in cpuInfo:
     data['data']['Memory Type'] = cpuInfo['supported memory type'].split('-')[0]
-  except:
-    print('Memory type is not present. Ignored')
-  try:
-    data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz" #This may not be consistent.
-  except:
-    print('Max memory frequency is not present. Ignored')
-  try:
-    data['data']['Max Memory Channels'] = int(cpuInfo['max memory channels'])
-  except:
-    print('Max memory channels not present. Ignored')
-  try:
+  else:
+    if 'supported memory type' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Memory Type")
+
+  if 'supported memory type' in cpuInfo:
+    try:
+      data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz"  # This may not be consistent.
+    except IndexError:
+      print('Invalid Max memory frequency value. Ignored')
+  else:
+    if 'supported memory type' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Max Memory Frequency")
+
+  if 'max memory channels' in cpuInfo:
+    try:
+      data['data']['Max Memory Channels'] = int(cpuInfo['max memory channels'])
+    except ValueError:
+      print('Invalid Max memory channels value. Ignored')
+  else:
+    if 'max memory channels' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Max Memory Channels")
+
+  if 'core stepping' in cpuInfo:
     data['data']['Stepping'] = cpuInfo['core stepping']
-  except:
-    print('Core stepping is not present. Ignored')
+  else:
+    if 'core stepping' not in inheritLabels:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Stepping")
   #XFR Support
+  print("WARNING : "+ cpuInfo['name'] + " is missing XFR Support")
   return data
 
 def mapInheritData(cpuInfo, extensions):
   """
-    Map the output to the expected format
+  Map the output to the expected format
   """
   data = {}
+  inheritSpecs = []  # This is so we can catch missing specs (When the individual specs can't find a spec, they'll check this first before reporting a missing spec.)
   data['hidden'] = True
-  data['name'] = cpuInfo['core name'].replace(" ","-")
+  data['name'] = cpuInfo['core name'].replace(" ", "-")
   data['data'] = {}
+  
   try:
     data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
-  except:
-    print('Release date is not present. Ignored')
+    inheritSpecs.append('first launched')
+  except KeyError:
+    pass  # Release date is not present. Ignored
   try:
     data['data']['L1 Cache (Data)'] = cpuInfo['l1d$ size'].split(" (")[0]
-  except:
-    print('L1 Cache (Data) is not present. Ignored')
+    inheritSpecs.append('l1d$ size')
+  except KeyError:
+    pass  # L1 Cache (Data) is not present. Ignored
   try:
     data['data']['L1 Cache (Instruction)'] = cpuInfo['l1i$ size'].split(" (")[0]
-  except:
-    print('L1 Cache (Data) not present. Ignored')
+    inheritSpecs.append('l1i$ size')
+  except KeyError:
+    pass  # L1 Cache (Instruction) not present. Ignored
   try:
     data['data']['L2 Cache (Total)'] = cpuInfo['l2$ size'].split(" (")[0]
-  except:
-    print('L2 Cache is not present. Ignored')
+    inheritSpecs.append('l2$ size')
+  except KeyError:
+    pass  # L2 Cache is not present. Ignored
   try:
     data['data']['L3 Cache (Total)'] = cpuInfo['l3$ size'].split(" (")[0]
-  except:
-    print('L3 cache is not present. Ignored')
+    inheritSpecs.append('l3$ size')
+  except KeyError:
+    pass  # L3 cache is not present. Ignored
   try:
     data['data']['TDP'] = cpuInfo['tdp'].split(" (")[0]
-  except:
-    print('TDP is not present. Ignored')
+    inheritSpecs.append('tdp')
+  except KeyError:
+    pass  # TDP is not present. Ignored
   try:
     data['data']['Core Count'] = int(cpuInfo['core count'].split(" (")[0])
-  except:
-    print('Core count is not present. Ignored')
+    inheritSpecs.append('core count')
+  except KeyError:
+    pass  # Core count is not present. Ignored
   try:
     data['data']['Thread Count'] = int(cpuInfo['thread count'].split(" (")[0])
-  except:
-    print('Thread count is not present. Ignored')
+    inheritSpecs.append('thread count')
+  except KeyError:
+    pass  # Thread count is not present. Ignored
   try:
     data['data']['Base Frequency'] = cpuInfo['base frequency'].split(" (")[0]
-  except:
-    print('Base frequency is not present. Ignored')
+    inheritSpecs.append('base frequency')
+  except KeyError:
+    pass  # Base frequency is not present. Ignored
   try:
     data['data']['Boost Frequency'] = cpuInfo['turbo frequency'].split(" (")[0]
-  except:
-    print('Boost frequency is not present. Ignored')
+    inheritSpecs.append('turbo frequency')
+  except KeyError:
+    pass  # Boost frequency is not present. Ignored
   try:
     data['data']['Lithography'] = cpuInfo['process'].split(" (")[0]
-  except:
-    print('Lithography not present. Ignored')
+    inheritSpecs.append('process')
+  except KeyError:
+    pass  # Lithography not present. Ignored
   try:
-    #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
-    data['data']['Socket'] = cpuInfo['socket']#TODO:EPYC-7443P sockets:SP3  + and LGA-4094
-  except:
-    print('Socket is not present. Ignored')
+    data['data']['Socket'] = cpuInfo['socket']
+    inheritSpecs.append('socket')
+  except KeyError:
+    pass  # Socket is not present. Ignored
   try:
     data['data']['Unlocked'] = not cpuInfo['has locked clock multiplier']
-  except:
-    print('overclockable(unlocked) is not present. Ignored')
+    inheritSpecs.append('has locked clock multiplier')
+  except KeyError:
+    pass  # Overclockable (unlocked) is not present. Ignored
   try:
     data['data']['Architecture'] = cpuInfo['microarchitecture']
-  except:
-    print('Architecture is not present. Ignored')
+    inheritSpecs.append('microarchitecture')
+  except KeyError:
+    pass  # Architecture is not present. Ignored
   try:
     data['data']['Memory Type'] = cpuInfo['supported memory type'].split('-')[0]
-  except:
-    print('Memory type is not present. Ignored')
+    inheritSpecs.append('supported memory type')
+  except KeyError:
+    pass  # Memory type is not present. Ignored
   try:
-    data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz" #This may not be consistent.
-  except:
-    print('Max memory frequency is not present. Ignored')
+    data['data']['Max Memory Frequency'] = cpuInfo['supported memory type'].split('-')[1] + " MHz"  # This may not be consistent.
+  except KeyError:
+    pass  # Max memory frequency is not present. Ignored
   try:
     data['data']['Max Memory Channels'] = int(cpuInfo['max memory channels'])
-  except:
-    print('Max memory channels not present. Ignored')
+    inheritSpecs.append('max memory channels')
+  except KeyError:
+    pass  # Max memory channels not present. Ignored
   try:
     data['data']['Stepping'] = cpuInfo['core stepping']
-  except:
-    print('Core stepping is not present. Ignored')
+    inheritSpecs.append('core stepping')
+  except KeyError:
+    pass  # Core stepping is not present. Ignored
+
   #XFR Support
   #All extensions: FMA4 FMA3 AVX AMD-V .etc
   #Gotta make extensions from string to list.
@@ -407,7 +473,7 @@ def mapInheritData(cpuInfo, extensions):
   else:
     data['data']['AVX/SSE/MMX'] = 'No'
   data['data']['Other Extensions'] = extensionsL
-  return data
+  return data, inheritSpecs
 
 def mapMainData(title,cpuNameData):
   data = {}
@@ -415,6 +481,7 @@ def mapMainData(title,cpuNameData):
   data['humanName'] = title.replace("-"," ")
   data['type'] = 'CPU Architecture'
   data['data'] = {}
+  #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:
   data['sections'] = {}
   data['sections']['Data to be changed'] = cpuNameData
 
@@ -427,11 +494,11 @@ def outputData(inherit,specs, extensions, cpuNameData):
   title = inherit["core name"].replace(" ","-")
   with open((title)+'.yaml', 'w') as outfile:
     yaml.dump(mapMainData(title,cpuNameData), outfile, default_flow_style=False, sort_keys=False)
-  inherit1 = mapInheritData(inherit, extensions)
+  inherit1, inheritDataLabels = mapInheritData(inherit, extensions)
   with open((title)+'-inherit.yaml', 'w') as outfile:
     yaml.dump(inherit1, outfile, default_flow_style=False, sort_keys=False)
   for each in specs:
-    each1 = mapCPUData(each, title)
+    each1 = mapCPUData(each, title, inheritDataLabels)
     with open((title)+'/'+ each['name']+'.yaml', 'w') as outfile:
       yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 

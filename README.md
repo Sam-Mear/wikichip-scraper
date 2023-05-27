@@ -10,7 +10,7 @@ If SpecDB ever included ECC memory support the scraper has this information as
 'has ecc memory support'
 
 ## TODO:
-* give out a warning/file for cpus with missing specs.
+* give out a warning/file for cpus with missing specs. DONE
 * include XFR stat
 * include Chipsets in the inherit
 * Make starting file(ie. Vermeer.yaml (vermeer-inherit and the vermeer folder gets made.))
