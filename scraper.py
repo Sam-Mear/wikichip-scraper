@@ -82,6 +82,7 @@ from urllib.error import HTTPError,URLError
 from bs4 import BeautifulSoup as BS
 
 BASE_URL = "https://en.wikichip.org"
+SLEEP_DURATION = 1.5
 
 
 def mapCPUData(cpuInfo, title):
@@ -408,17 +409,30 @@ def mapInheritData(cpuInfo, extensions):
   data['data']['Other Extensions'] = extensionsL
   return data
 
-def outputData(inherit,specs, extensions):
+def mapMainData(title,cpuNameData):
+  data = {}
+  data['name'] = title
+  data['humanName'] = title.replace("-"," ")
+  data['type'] = 'CPU Architecture'
+  data['data'] = {}
+  data['sections'] = {}
+  data['sections']['Data to be changed'] = cpuNameData
+
+  return data
+
+def outputData(inherit,specs, extensions, cpuNameData):
   """
   This functions outputs the data into YAML files. It calls mapCPUData and mapInheritData to map the wikichip data to SpecDB data.
   """
   title = inherit["core name"].replace(" ","-")
+  with open((title)+'.yaml', 'w') as outfile:
+    yaml.dump(mapMainData(title,cpuNameData), outfile, default_flow_style=False, sort_keys=False)
   inherit1 = mapInheritData(inherit, extensions)
   with open((title)+'-inherit.yaml', 'w') as outfile:
     yaml.dump(inherit1, outfile, default_flow_style=False, sort_keys=False)
   for each in specs:
     each1 = mapCPUData(each, title)
-    with open((title)+'/'+ each['model number']+'.yaml', 'w') as outfile:
+    with open((title)+'/'+ each['name']+'.yaml', 'w') as outfile:
       yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 
 
@@ -440,9 +454,10 @@ def organiseData(specs):
     dfjhgdlsjkfh
   """
   bigDictionary = {}
+  cpuNameDictionary = {}
   #print(specs['name'])
   for each in specs:
-    #below tests if it is a gpu or cpu
+    cpuNameDictionary[each['name']] = [each['model number']]
     
     for dictionaryTitle in each:
       if dictionaryTitle in bigDictionary:
@@ -462,7 +477,7 @@ def organiseData(specs):
       each.pop(dictionaryTitle)
   #print(inherit)
   #print(specs)
-  return inherit,specs
+  return inherit,specs,cpuNameDictionary
 
 #  with open((title.replace(" ","-"))+'/'+ each['model number']+'.yaml', 'w') as outfile:
 #    yaml.dump(each, outfile, default_flow_style=False)
@@ -485,7 +500,7 @@ def statsPage(url, title):
     A dictionary of stats scraped from the webpage.
   """
   print("scraping stats page "+ url+"...")
-  sleep(1)
+  sleep(SLEEP_DURATION)
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
   except HTTPError as e:#If there is a server error
@@ -533,7 +548,7 @@ def codenamePage(title, url):
   except FileExistsError:
     print("Directory already exists")
   specsList = []
-  sleep(1)
+  sleep(SLEEP_DURATION)
   try:
     webpage = urlopen(Request(url, headers={'User-Agent':'Mozilla/6.0'}))
   except HTTPError as e:#If there is a server error
@@ -613,8 +628,8 @@ while True:
         if "/wiki/" in each["href"] and '/cores/' in each["href"]:
           #print(each.getText())
           specsList = codenamePage(each.getText(),BASE_URL+each["href"])
-          inherit, specs = organiseData(specsList)
-          outputData(inherit,specs, extensions)
+          inherit, specs, cpuNameData = organiseData(specsList)
+          outputData(inherit,specs, extensions, cpuNameData)
 
       
   url=""
