@@ -13,6 +13,6 @@ If SpecDB ever included ECC memory support the scraper has this information as
 * give out a warning/file for cpus with missing specs. DONE
 * include XFR stat
 * include Chipsets in the inherit
-* Make starting file(ie. Vermeer.yaml (vermeer-inherit and the vermeer folder gets made.))
-* categorise CPUs into their categories (CPU-SERVER, CPU-DESKTOP, APU-DESKTOP ect)
+* Make starting file(ie. Vermeer.yaml (vermeer-inherit and the vermeer folder gets made.)) HALF DONE
+* categorise CPUs into their categories (CPU-SERVER, CPU-DESKTOP, APU-DESKTOP ect) STARTED
 * APU specs

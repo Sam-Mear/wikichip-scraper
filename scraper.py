@@ -480,10 +480,12 @@ def mapMainData(title,cpuNameData):
   data['name'] = title
   data['humanName'] = title.replace("-"," ")
   data['type'] = 'CPU Architecture'
+  data['topHeader'] = 'SELECT CPU'#TODO: CHECK IF ITS APU
   data['data'] = {}
   #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:
-  data['sections'] = {}
-  data['sections']['Data to be changed'] = cpuNameData
+  data['sections'] = []
+  for each in cpuNameData:
+    data['sections'].append({'header':each, 'members':cpuNameData[each]})
 
   return data
 
@@ -491,15 +493,26 @@ def outputData(inherit,specs, extensions, cpuNameData):
   """
   This functions outputs the data into YAML files. It calls mapCPUData and mapInheritData to map the wikichip data to SpecDB data.
   """
+  
   title = inherit["core name"].replace(" ","-")
-  with open((title)+'.yaml', 'w') as outfile:
+  if('market segment' in inherit):
+    #Organise file
+    with open('CPUs-'+inherit['market segment']+'.yaml', 'a') as outfile:
+      yaml.dump(inherit['core name'], outfile, default_flow_style=False, sort_keys=False)
+  else:
+    with open('CPUs-uncategorised.yaml', 'a') as outfile:
+      yaml.dump(inherit['core name'], outfile, default_flow_style=False, sort_keys=False)
+  #Main file
+  with open('CPUs/'+(title)+'.yaml', 'w') as outfile:
     yaml.dump(mapMainData(title,cpuNameData), outfile, default_flow_style=False, sort_keys=False)
+  #Inherit file
   inherit1, inheritDataLabels = mapInheritData(inherit, extensions)
-  with open((title)+'-inherit.yaml', 'w') as outfile:
+  with open('CPUs/'+(title)+'-inherit.yaml', 'w') as outfile:
     yaml.dump(inherit1, outfile, default_flow_style=False, sort_keys=False)
+  #Spec file
   for each in specs:
     each1 = mapCPUData(each, title, inheritDataLabels)
-    with open((title)+'/'+ each['name']+'.yaml', 'w') as outfile:
+    with open('CPUs/'+(title)+'/'+ each['name']+'.yaml', 'w') as outfile:
       yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 
 
@@ -521,10 +534,13 @@ def organiseData(specs):
     dfjhgdlsjkfh
   """
   bigDictionary = {}
-  cpuNameDictionary = {}
+  cpuFamilyDictionary = {}
   #print(specs['name'])
   for each in specs:
-    cpuNameDictionary[each['name']] = [each['model number']]
+    if each['family'] in cpuFamilyDictionary:
+      cpuFamilyDictionary[each['family']].append(each['name'])
+    else:
+      cpuFamilyDictionary[each['family']] = [each['name']]
     
     for dictionaryTitle in each:
       if dictionaryTitle in bigDictionary:
@@ -544,7 +560,7 @@ def organiseData(specs):
       each.pop(dictionaryTitle)
   #print(inherit)
   #print(specs)
-  return inherit,specs,cpuNameDictionary
+  return inherit,specs,cpuFamilyDictionary
 
 #  with open((title.replace(" ","-"))+'/'+ each['model number']+'.yaml', 'w') as outfile:
 #    yaml.dump(each, outfile, default_flow_style=False)
@@ -610,7 +626,12 @@ def codenamePage(title, url):
   #TODO : Test if this page is actually a codename page, if not, return an error.
   try:
     # Create target Directory
-    mkdir(title.replace(" ","-"))
+    mkdir('CPUs')
+  except FileExistsError:
+    pass
+  try:
+    # Create target Directory
+    mkdir('CPUs/'+title.replace(" ","-"))
     print("Directory Created ") 
   except FileExistsError:
     print("Directory already exists")
@@ -664,7 +685,7 @@ def codenamePage(title, url):
 
 
 while True:
-  print("Make sure to delete the APU data it gives you. This wont be correct.")
+  print("\n\n\n\n---------------------------\n* Make sure to delete the APU data it gives you. This wont be correct.\n* Each CPUs need chipset data (This can be found on wikichip socket/package page of the cpu)\n---------------------------")
   url = input("Enter a wikichip microarchitecture page like:https://en.wikichip.org/wiki/amd/microarchitectures/zen_3\n")
   if "wikichip.org/wiki" in url:
     req = Request(url, headers={'User-Agent':'Mozilla/6.0'})
