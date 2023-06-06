@@ -87,7 +87,16 @@ SLEEP_DURATION = 1.5
 
 def mapCPUData(cpuInfo, title, inheritLabels):
   """
-  # Map the output to the expected format
+  Map the output to the expected format.
+  This function is called by outputData, to move wikichip data to what SpecDB understands
+
+  Args:
+    cpuInfo (dict): CPU information dictionary
+    title (str): Title of the CPU
+    inheritLabels (list): List of inherited labels
+
+  Returns:
+    dict: Mapped CPU data in the expected format
   """
   # WARNING : 
   # TODO : 
@@ -234,7 +243,15 @@ def mapCPUData(cpuInfo, title, inheritLabels):
 
 def mapInheritData(cpuInfo, extensions):
   """
-  Map the output to the expected format
+  Map the output to the expected format.
+  This function is called by outputData, to move wikichip data to what SpecDB understands
+
+  Args:
+    cpuInfo (dict): Dictionary containing CPU information
+    extensions (str): String containing CPU extensions
+
+  Returns:
+    dict: Mapped inherited data in the expected format
   """
   data = {}
   inheritSpecs = []  # This is so we can catch missing specs (When the individual specs can't find a spec, they'll check this first before reporting a missing spec.)
@@ -476,6 +493,10 @@ def mapInheritData(cpuInfo, extensions):
   return data, inheritSpecs
 
 def mapMainData(title,cpuNameData):
+  """
+  Map the output to the expected format.
+  This function is called by outputData, to move wikichip data to what SpecDB understands
+  """
   data = {}
   data['name'] = title
   data['humanName'] = title.replace("-"," ")
@@ -491,7 +512,7 @@ def mapMainData(title,cpuNameData):
 
 def outputData(inherit,specs, extensions, cpuNameData):
   """
-  This functions outputs the data into YAML files. It calls mapCPUData and mapInheritData to map the wikichip data to SpecDB data.
+  This functions outputs the data into YAML files. It calls mapCPUData, mapInheritData and mapMainData to map the wikichip data to SpecDB data.
   """
   
   title = inherit["core name"].replace(" ","-")
@@ -512,7 +533,7 @@ def outputData(inherit,specs, extensions, cpuNameData):
   #Spec file
   for each in specs:
     each1 = mapCPUData(each, title, inheritDataLabels)
-    with open('CPUs/'+(title)+'/'+ each['name']+'.yaml', 'w') as outfile:
+    with open('CPUs/'+(title)+'/'+ each['name'].replace(" ","-")+'.yaml', 'w') as outfile:
       yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 
 
@@ -531,7 +552,12 @@ def organiseData(specs):
   Returns
   ----------
   dictionary
-    dfjhgdlsjkfh
+    Dictionary of the common specs among CPUs. The inherit data.
+  list
+    The parameter of this functionm, but with the inherit data removed from each.
+  dictionary
+    a dictionary that categorises the cpus by their family name.
+  
   """
   bigDictionary = {}
   cpuFamilyDictionary = {}
