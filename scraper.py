@@ -6,20 +6,21 @@
 #
 #
 #######------TODO--------#######
-#gpu base frequency
+# Lots of the GPU data are in a different section of the webpage that would need to be scraped.
+#gpu base frequency - integrated gpu max frequency
 #gpu boost frequency
 #fp32 compute
 #render output unit count
 #vram capacity
 #GPU
-#GPU Model
+#GPU Model - integrated gpu
 #Die size
 #Module Count
 #FP64 Compute
 #XFR Frequency
 #Shader Processing Count
 #Texture mapping unit count
-#VRAM Type
+#VRAM Type - for CPUs, DDR4 or whatever.
 #VRAM frequency
 #VRAM bandwidth
 #VRAM bus width
@@ -32,7 +33,7 @@
 #Vulkan support
 #OpenCL Support
 #Freesync support
-#crossfire support
+#Crossfire Support - No 
 #max displays
 
 #######------DONE--------#######
@@ -711,7 +712,7 @@ def codenamePage(title, url):
 
 
 while True:
-  print("\n\n\n\n---------------------------\n* Make sure to delete the APU data it gives you. This wont be correct.\n* Each CPUs need chipset data (This can be found on wikichip socket/package page of the cpu)\n---------------------------")
+  print("\n\n\n\n---------------------------\n* Make sure to edit the APU data it gives you. This wont be correct.\n* Each CPUs need chipset data (This can be found on wikichip socket/package page of the cpu and usually stored in the inherit file.)\n---------------------------")
   url = input("Enter a wikichip microarchitecture page like:https://en.wikichip.org/wiki/amd/microarchitectures/zen_3\n")
   if "wikichip.org/wiki" in url:
     req = Request(url, headers={'User-Agent':'Mozilla/6.0'})
