@@ -86,6 +86,19 @@ BASE_URL = "https://en.wikichip.org"
 SLEEP_DURATION = 1.5
 
 
+def mhzToGhz(spec):
+  if 'MHz' in spec:
+    splitString = spec.split(' ')
+    splitString[1] = ' GHz'
+    splitString[0] = splitString[0].replace(',','')
+    if splitString[0].isdigit():
+      splitString[0] = str(float(splitString[0])/1000)
+    else:
+      print("ERROR : Failed to change GHz to MHz")
+      print(splitString)
+      return spec
+    return("".join(splitString))
+
 def mapCPUData(cpuInfo, title, inheritLabels):
   """
   Map the output to the expected format.
@@ -178,12 +191,17 @@ def mapCPUData(cpuInfo, title, inheritLabels):
 
   if 'base frequency' in cpuInfo:
     data['data']['Base Frequency'] = cpuInfo['base frequency'].split(" (")[0]
+    #Convert
+    if 'MHz' in data['data']['Base Frequency']:
+      data['data']['Base Frequency'] = mhzToGhz(data['data']['Base Frequency'])
   else:
     if 'base frequency' not in inheritLabels:
       print("WARNING : "+ cpuInfo['name'] + " is missing Base Frequency")
 
   if 'turbo frequency' in cpuInfo:
     data['data']['Boost Frequency'] = cpuInfo['turbo frequency'].split(" (")[0]
+    if 'MHz' in data['data']['Boost Frequency']:
+      data['data']['Boost Frequency'] = mhzToGhz(data['data']['Boost Frequency'])
   else:
     if 'turbo frequency' not in inheritLabels:
       print("WARNING : "+ cpuInfo['name'] + " is missing Boost Frequency")
@@ -243,6 +261,7 @@ def mapCPUData(cpuInfo, title, inheritLabels):
       print("WARNING : "+ cpuInfo['name'] + " is missing Stepping")
   #XFR Support
   print("WARNING : "+ cpuInfo['name'] + " is missing XFR Support")
+
   return data
 
 def mapInheritData(cpuInfo, extensions):
