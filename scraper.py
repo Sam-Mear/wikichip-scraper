@@ -120,7 +120,10 @@ def mapCPUData(cpuInfo, title, inheritLabels):
     print('core name(inherits) is not present. Ignored')
   data['data'] = {}
   if 'first launched' in cpuInfo:
-    data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
+    try:
+      data['data']['Release Date'] = datetime.datetime.strptime(cpuInfo['first launched'], "%B %d, %Y").strftime("%Y-%m-%d")
+    except:
+      print("WARNING : "+ cpuInfo['name'] + " is missing Release Date")
   else:
     if 'first launched' not in inheritLabels:
       print("WARNING : "+ cpuInfo['name'] + " is missing Release Date")
@@ -575,18 +578,34 @@ def organiseData(specs):
       else:
         bigDictionary[dictionaryTitle] = [each[dictionaryTitle]]
   inherit = {}
+  inheritMajority = {}
   for dictionaryTitle in bigDictionary:
     if len(bigDictionary[dictionaryTitle]) == len(specs):
       #check if all the elements in the list are the same.
       if bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) == len(bigDictionary[dictionaryTitle]):
         #they are! put this in the inherit dictionary.
         inherit[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
+      # Check if more than 50% of cpus agree on a spec, then it can be added to the inherit, but this inherit cant mean we remove the spec from
+      # cpus that dont agree.
+      #TODO : needs to check if every single cpu has that attribute filled in before doing this.
+      # Otherwise what is 60% of the cpus agree they launched on one date, and the others were random, but there was 
+      # one cpu that just didnt have a release date filled out, then due to the inherit, that cpu would have an incorrect release date.
+      elif bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) > (len(bigDictionary[dictionaryTitle])/2):
+        inheritMajority[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
   #next is to remove the items that made it to the inherit dictionary from the induvidual cpu specs
   for dictionaryTitle in inherit:
     for each in specs:
       each.pop(dictionaryTitle)
+  #Remove the items that may be in inherit, needs to be checked though
+  for dictionaryTitle in inheritMajority:
+    for each in specs:
+      if each[dictionaryTitle] == inheritMajority[dictionaryTitle]:
+        each.pop(dictionaryTitle)
+    #Combine inherit and inheritMajority
+    inherit[dictionaryTitle] = inheritMajority[dictionaryTitle]
   #print(inherit)
   #print(specs)
+  print(inheritMajority)
   return inherit,specs,cpuFamilyDictionary
 
 #  with open((title.replace(" ","-"))+'/'+ each['model number']+'.yaml', 'w') as outfile:
