@@ -115,10 +115,10 @@ def mapCPUData(cpuInfo, title, inheritLabels):
   # WARNING : 
   # TODO : 
   ####### WIKICHIP CAN SOMETIMES USE DIFFERENT NAMES FOR THESE THINGS SO THIS HAS TO BE CONSIDERED.
-  if('integrated gpu' in each):
-    apu = True
-  else:
-    apu = False
+  #if('integrated gpu' in each):
+  #  apu = True
+  #else:
+  #  apu = False
   data = {}
   try:
     data['name'] = cpuInfo['name'].replace(" ","-")
@@ -556,11 +556,16 @@ def outputData(inherit,specs, extensions, cpuNameData):
   #Spec file
   for each in specs:
     each1 = mapCPUData(each, title, inheritDataLabels)
-    with open('CPUs/'+(title)+'/'+ each['name'].replace(" ","-")+'.yaml', 'w') as outfile:
-      yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
+    try:
+      with open('CPUs/'+(title)+'/'+ each['name'].replace(" ","-")+'.yaml', 'w') as outfile:
+        yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
+    except:
+      mkdir('CPUs/'+title)
+      with open('CPUs/'+(title)+'/'+ each['name'].replace(" ","-")+'.yaml', 'w') as outfile:
+        yaml.dump(each1, outfile, default_flow_style=False, sort_keys=False)
 
 
-def organiseData(specs):
+def organiseData(specs, inheritBool = True):
   """
   This functions finds what data is to be added to the inherit file, and what attributes are unique to a CPU
   TODO : 
@@ -571,6 +576,10 @@ def organiseData(specs):
   ----------
   specs : list
     list dictionaries of specs
+  inheritBool : bool
+    Optional parameter, True is default.
+    True for calculating the inherit
+    False for not calculating inherit.
   
   Returns
   ----------
@@ -587,9 +596,9 @@ def organiseData(specs):
   #print(specs['name'])
   for each in specs:
     if each['family'] in cpuFamilyDictionary:
-      cpuFamilyDictionary[each['family']].append(each['name'])
+      cpuFamilyDictionary[each['family']].append(each['name'].replace(" ","-"))
     else:
-      cpuFamilyDictionary[each['family']] = [each['name']]
+      cpuFamilyDictionary[each['family']] = [each['name'].replace(" ","-")]
     
     for dictionaryTitle in each:
       if dictionaryTitle in bigDictionary:
@@ -598,33 +607,36 @@ def organiseData(specs):
         bigDictionary[dictionaryTitle] = [each[dictionaryTitle]]
   inherit = {}
   inheritMajority = {}
-  for dictionaryTitle in bigDictionary:
-    if len(bigDictionary[dictionaryTitle]) == len(specs):
-      #check if all the elements in the list are the same.
-      if bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) == len(bigDictionary[dictionaryTitle]):
-        #they are! put this in the inherit dictionary.
-        inherit[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
-      # Check if more than 50% of cpus agree on a spec, then it can be added to the inherit, but this inherit cant mean we remove the spec from
-      # cpus that dont agree.
-      #TODO : needs to check if every single cpu has that attribute filled in before doing this.
-      # Otherwise what is 60% of the cpus agree they launched on one date, and the others were random, but there was 
-      # one cpu that just didnt have a release date filled out, then due to the inherit, that cpu would have an incorrect release date.
-      elif bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) > (len(bigDictionary[dictionaryTitle])/2):
-        inheritMajority[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
-  #next is to remove the items that made it to the inherit dictionary from the induvidual cpu specs
-  for dictionaryTitle in inherit:
-    for each in specs:
-      each.pop(dictionaryTitle)
-  #Remove the items that may be in inherit, needs to be checked though
-  for dictionaryTitle in inheritMajority:
-    for each in specs:
-      if each[dictionaryTitle] == inheritMajority[dictionaryTitle]:
+  if inheritBool == True:
+    for dictionaryTitle in bigDictionary:
+      if len(bigDictionary[dictionaryTitle]) == len(specs):
+        #check if all the elements in the list are the same.
+        if bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) == len(bigDictionary[dictionaryTitle]):
+          #they are! put this in the inherit dictionary.
+          inherit[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
+        # Check if more than 50% of cpus agree on a spec, then it can be added to the inherit, but this inherit cant mean we remove the spec from
+        # cpus that dont agree.
+        #TODO : needs to check if every single cpu has that attribute filled in before doing this.
+        # Otherwise what is 60% of the cpus agree they launched on one date, and the others were random, but there was 
+        # one cpu that just didnt have a release date filled out, then due to the inherit, that cpu would have an incorrect release date.
+        elif bigDictionary[dictionaryTitle].count(bigDictionary[dictionaryTitle][0]) > (len(bigDictionary[dictionaryTitle])/2):
+          inheritMajority[dictionaryTitle] = bigDictionary[dictionaryTitle][0]
+    #next is to remove the items that made it to the inherit dictionary from the induvidual cpu specs
+    for dictionaryTitle in inherit:
+      for each in specs:
         each.pop(dictionaryTitle)
-    #Combine inherit and inheritMajority
-    inherit[dictionaryTitle] = inheritMajority[dictionaryTitle]
-  #print(inherit)
-  #print(specs)
-  print(inheritMajority)
+    #Remove the items that may be in inherit, needs to be checked though
+    for dictionaryTitle in inheritMajority:
+      for each in specs:
+        if each[dictionaryTitle] == inheritMajority[dictionaryTitle]:
+          each.pop(dictionaryTitle)
+      #Combine inherit and inheritMajority
+      inherit[dictionaryTitle] = inheritMajority[dictionaryTitle]
+    #print(inherit)
+    #print(specs)
+    print(inheritMajority)
+  else:
+    inherit["core name"] = specs[0]["core name"]
   return inherit,specs,cpuFamilyDictionary
 
 #  with open((title.replace(" ","-"))+'/'+ each['model number']+'.yaml', 'w') as outfile:
@@ -637,10 +649,10 @@ def statsPage(url, title):
 
   Parameters
   ----------
-  title : str
-    The cpu name of the page we are scraping.
   url : str
     The CPU URL we are scraping.
+  title : str
+    The cpu name of the page we are scraping.
   
   Returns
   ----------
@@ -753,36 +765,52 @@ while True:
   print("\n\n\n\n---------------------------\n* Make sure to edit the APU data it gives you. This wont be correct.\n* Each CPUs need chipset data (This can be found on wikichip socket/package page of the cpu and usually stored in the inherit file.)\n---------------------------")
   url = input("Enter a wikichip microarchitecture page like:https://en.wikichip.org/wiki/amd/microarchitectures/zen_3\n")
   if "wikichip.org/wiki" in url:
-    req = Request(url, headers={'User-Agent':'Mozilla/6.0'})
-    try:
-      webpage = urlopen(req)#Open microarchitecture page
-    except HTTPError as e:#If there is a server error
-      print(e)#show the error
-    except URLError as e:#If URL does not exist
-      print("Server could not be found")
-    else:#If there are no errors
-      #Scrapes
-      html = BS(webpage.read(), "html.parser")#the html is stored
-      #find extensions
-      #you can only find extensions on this page
-      latestResult = html.find('table',{'class':'infobox'})
-      labels = latestResult.findAll('td',{'class':'label'})
-      values = latestResult.findAll('td',{'class':'value'})
-      extensions = ''
-      for i in range(len(labels)):
-        if labels[i].getText() == "Extensions":
-          extensions = values[i].getText()
-          break
-      #find list of codenames
-      latestResult = html.find('div', {'id':'mw-content-text'}).find('table', {'class':'wikitable'})
-      #find the href link
-      latestResult = latestResult.findAll('a', href=True)
-      for each in latestResult:
-        if "/wiki/" in each["href"] and '/cores/' in each["href"]:
-          #print(each.getText())
-          specsList = codenamePage(each.getText(),BASE_URL+each["href"])
-          inherit, specs, cpuNameData = organiseData(specsList)
-          outputData(inherit,specs, extensions, cpuNameData)
+    if "microarchitectures" in url:
+      req = Request(url, headers={'User-Agent':'Mozilla/6.0'})
+      try:
+        webpage = urlopen(req)#Open microarchitecture page
+      except HTTPError as e:#If there is a server error
+        print(e)#show the error
+      except URLError as e:#If URL does not exist
+        print("Server could not be found")
+      else:#If there are no errors
+        #Scrapes
+        html = BS(webpage.read(), "html.parser")#the html is stored
+        #find extensions
+        #you can only find extensions on this page
+        latestResult = html.find('table',{'class':'infobox'})
+        labels = latestResult.findAll('td',{'class':'label'})
+        values = latestResult.findAll('td',{'class':'value'})
+        extensions = ''
+        for i in range(len(labels)):
+          if labels[i].getText() == "Extensions":
+            extensions = values[i].getText()
+            break
+        #find list of codenames
+        latestResult = html.find('div', {'id':'mw-content-text'}).find('table', {'class':'wikitable'})
+        #find the href link
+        latestResult = latestResult.findAll('a', href=True)
+        for each in latestResult:
+          if "/wiki/" in each["href"] and '/cores/' in each["href"]:
+            #print(each.getText())
+            specsList = codenamePage(each.getText(),BASE_URL+each["href"])
+            inherit, specs, cpuNameData = organiseData(specsList)
+            outputData(inherit,specs, extensions, cpuNameData)
+    elif "cores/" in url:
+      print("codename page found instead of microarchitecture")
+      specsList = codenamePage(url.split('cores/')[1].capitalize(),url)
+      inherit, specs, cpuNameData = organiseData(specsList)
+      outputData(inherit,specs, '', cpuNameData)
+    else:
+      print("Guessing its a single cpu spec page")
+      data = statsPage(url,'')
+      inherit, specs, cpuNameData = organiseData([data], inheritBool= False)
+      outputData(inherit, specs, '', cpuNameData)
 
       
   url=""
+
+
+#1. Microarch (extensions)
+#2. codenamePage
+#3. statspage (specs)
