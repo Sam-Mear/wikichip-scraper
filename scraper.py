@@ -524,7 +524,7 @@ def mapMainData(title,cpuNameData):
   data['name'] = title
   data['humanName'] = title.replace("-"," ")
   data['type'] = 'CPU Architecture'
-  data['topHeader'] = 'SELECT CPU'#TODO: CHECK IF ITS APU
+  data['topHeader'] = "SELECT CPU:"#TODO: CHECK IF ITS APU
   data['data'] = {}
   #data['data']['Sockets'] = cpuInfo['socket'].split(" and ")#TODO:
   data['sections'] = []
