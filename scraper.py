@@ -15,7 +15,7 @@
 #GPU
 #GPU Model - integrated gpu
 #Die size
-#Module Count
+#Module Count - Only for bulldozer rlly.
 #FP64 Compute
 #XFR Frequency
 #Shader Processing Count
